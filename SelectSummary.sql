@@ -281,12 +281,108 @@ select *
 from emp
 where comm is null and job in('MANAGER','CLERK') and mgr is not null and ename not like '_L%';
 
+--============================================================================================
+--함수
+--문자함수 : upper,lower,length,substr,instr,replace,lpad,rpad,concat
+--숫자함수
+--날짜함수
 
+--1. 문자함수
+-- #upper 함수 : 문자열을 소문자 -> 대문자로 변환
+select 'Welcome',upper('Welcome')
+from dual;  --dual : 가상테이블
 
+-- #lower 함수 : 문자열을 대문자 -> 소문자로 변환
+select lower(ename),upper(ename)
+from emp;
 
+select *
+from emp
+where ename = 'FORD';
 
+--emp 안에 scott은 대문자로 되어있지만, lower을 사용하여 전체 이름을 소문자로 바꾼뒤 조회
+select *
+from emp
+where lower(ename) = 'scott';
 
+-- #length 함수 : 문자열의 길이 반환
+select ename,length(ename)
+from emp;
 
+-- #substr 함수 : 문자열 반환
+--      1234567891011121314151617
+--     -17                     -1   
+select 'Welcome to Oracle',substr('Welcome to Oracle',2,3)  --문자의 2번째 열부터 3개의 문자열 가져오기  elc
+,substr('Welcome to Oracle',10)  --시작위치만 지정  o Oracle
+from dual;
+
+select 'Welcome to Oracle',substr('Welcome to Oracle',-3,3)  --cle
+,substr('Welcome to Oracle',-10)  --to Oracle
+from dual;
+
+-- #instr 함수 : 문자열의 위치값 반환
+select instr('Welcome to Oracle','o')
+from dual;
+
+select instr('Welcome to Oracle','o',6)   --시작 위치인 6번째 다음에 있는 o를 반환하므로 to의 o인 10번째 위치값 반환
+from dual;
+
+select instr('Welcome to Oracle','e',3,2)  --2번째 나오는 e의 위치값을 반환해라 = 17
+from dual;
+
+-- #replace 함수 : 문자열 대체
+select 'Welcome to Oracle',replace('Welcome to Oracle','to','of')
+from dual;
+
+-- #lpad 함수 : 문자열의 왼쪽에 공간을 확보해서 문자를 대입
+-- #rpad 함수 : 문자열의 오른쪽에 공간을 확보해서 문자를 대입
+select 'oracle',lpad('oracle',10,'#'),rpad('oracle',10,'*')   --10은 문자열의 총 길이를 지정하는 숫자
+from dual;
+
+select rpad('950828-',14,'*')
+from dual;
+
+-- #concat 함수 : 문자열 연결
+select concat(empno,ename),empno || '' || ename
+from emp;
+
+--------------------------------------------------
+--2. 숫자함수
+
+--round 함수 : 반올림한 값 반환
+select 
+round(1234.5678),
+round(1234.5678,0),   --소수점 반환 안함(기본값) 1235
+round(1234.5678,1),   --소수점 첫째자리까지 반환 1234.6
+round(1234.5678,2),   --소수점 둘째자리까지 반환  1234.57
+round(1234.5678,-1)   --정수자리에서 반올림(.기준 한칸씩 앞에서 반올림) 1230
+from dual;
+
+--trunc 함수 : 값을 버리고 반환
+select 
+trunc(1234.5678),
+trunc(1234.5678,0),   --0까지의 자리만 사용하고 나머지는 버려라  1234
+trunc(1234.5678,1),   --소수점 첫번째 자리까지만 반환하고 나머지 버림  1234.5
+trunc(1234.5678,2),   --1234.56
+trunc(1234.5678,-1)   --1230
+from dual;
+
+--ceil 함수 : 자신보다 큰 숫자 중 가장 가까운 정수
+--floor 함수 : 자신보다 작은 숫자 중 가장 가까운 정수
+select
+ceil(3.14),    -- 4
+floor(3.14),   -- 3
+ceil(-3.14),   -- -3
+floor(-3.14)   -- -4
+from dual;
+
+--mod 함수 : 나머지 구해서 반환
+select mod(5,2),mod(10,4)
+from dual;
+
+select *
+from emp
+where mod(empno,2) = 1;   --사번이 홀수인 사원 조회
 
 
 
