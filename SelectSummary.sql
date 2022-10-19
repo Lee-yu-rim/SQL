@@ -2,7 +2,7 @@
 -- select 컬럼명 
 -- from 테이블명
 
-desc emp;  --테이블 조회
+desc emp;  --테이블의 컬럼구조 확인
 
 --전체 데이터 조회
 select empno,ename,job,mgr,hiredate,sal,comm,deptno
@@ -300,7 +300,7 @@ select *
 from emp
 where ename = 'FORD';
 
---emp 안에 scott은 대문자로 되어있지만, lower을 사용하여 전체 이름을 소문자로 바꾼뒤 조회
+--emp 안에 scott은 대문자로 되어있지만, lower을 사용하여 전체 이름을 소문자로 바꾼뒤 조회 -> 검색의 효율성을 높임
 select *
 from emp
 where lower(ename) = 'scott';
@@ -346,7 +346,7 @@ from dual;
 select concat(empno,ename),empno || '' || ename
 from emp;
 
---------------------------------------------------
+-----------------------------------------------------------------------------
 --2. 숫자함수
 
 --round 함수 : 반올림한 값 반환
@@ -384,11 +384,239 @@ select *
 from emp
 where mod(empno,2) = 1;   --사번이 홀수인 사원 조회
 
+------------------------------------------------------------------------------
+--3. 날짜함수
+
+--sysdate 함수 : 현재 시스템의 날짜 조회
+select sysdate -1 as 어제, sysdate, sysdate +1 as 내일
+from dual;
+
+--날짜와 날짜 연산 -> 일수로 반환함
+select sysdate - hiredate as 근무일수    --차이가 일수 반환
+from emp;
+
+--근속년수
+select trunc((sysdate - hiredate)/365) as 근속년수
+from emp;
+
+--날짜 데이터의 반올림
+--예제 1
+select sysdate,
+round(sysdate,'cc') as format_cc,
+round(sysdate,'yyyy') as format_yyyy,
+round(sysdate,'q') as format_q,
+round(sysdate,'ddd') as format_ddd,
+round(sysdate,'hh') as format_hh
+from dual;
+
+--예제 2
+select sysdate,
+trunc(sysdate,'cc') as format_cc,
+trunc(sysdate,'yyyy') as format_yyyy,
+trunc(sysdate,'q') as format_q,
+trunc(sysdate,'ddd') as format_ddd,
+trunc(sysdate,'hh') as format_hh
+from dual;
+
+--------------------------------------------------------------------------------
+--4. 자료형변환 함수
+--to_char() : 숫자 > 문자 / 날짜 > 문자
+--to_number() : 문자 > 숫자
+--to_date() : 문자 > 날짜
+
+--날짜 > 문자
+--to_char(날짜데이터,표시할 형식)
+select sysdate, to_char(sysdate,'YYYY-MM-DD-DAY HH24:MI:SS') as 현재시간
+from dual;
+
+select hiredate, to_char(hiredate,'YYYY-MM-DD-DAY HH24:MI:SS') as 입사일자
+from emp;
+
+--숫자 > 문자
+--to_char(숫자데이터, 표시할 형식)
+select to_char(123456, 'L999,999')   --L은 지역화폐 단위를 나타냄 / 9는 빈자리 무시
+from dual;
+
+select sal, to_char(sal,'L000,000')  --0은 빈자리를 0으로 나타냄
+from emp;
+
+--문자 > 숫자
+--to_number(문자데이터, 표시할 형식) : 문자데이터는 숫자의 형식을 띄워야한다.
+select '20000' - 10000  --자동형변환
+from dual;
+
+select '20,000' - '5,000'   --to_number()를 이용한 강제형변환 필요
+from dual;
+
+select to_number('20,000','999,999') - to_number('5,000','999,999')
+from dual;
+
+--문자 > 날짜
+--to_date(문자데이터, 표시할 형식) : 문자데이터도 날짜의 형식을 띄워야한다.
+select to_date('20221019','YYYY/MM/DD')
+from dual;
+
+select *
+from emp
+where hiredate < to_date('19820101','YYYY-MM-DD');
+
+------------------------------------------------------------------------------
+--5. null 처리 함수
+--nvl(null, 바꾸고 싶은 데이터)
+--nvl은 null 데이터의 타입과 동일한 타입으로 변경해야한다.
+--nvl(숫자, 숫자) , nvl(문자 , 문자)
+select ename 사원명,sal,sal * 12 + nvl(comm,0) as 연봉,comm
+from emp;                       --nvl(comm(숫자데이터),숫자0)
+
+select ename,job,mgr
+from emp
+where mgr is null;
+
+select ename,job,nvl(to_char(mgr,'9999'),'CEO') as mgr   --mgr은 숫자타입이고 CEO는 문자이므로 타입이 불일치함 -> to_char을 이용하여 문자타입으로 변환
+from emp
+where mgr is null;
+
+select comm,nvl2(comm,'O','X') --null인 경우는 O반환, null이 아니면 X반환 / 타입 상관 무
+from emp;
+
+------------------------------------------------------------------------------
+--6. 조건문 표현하는 함수
+--decode()  -> switch 
+--case()    -> if
+
+--decode() 함수
+select ename,job,deptno,
+    decode(deptno,10,'AAA',20,'BBB',30,'CCC','기타') as 부서명   --마지막은 디폴트값
+    --deptno랑 10을 비교해서 맞으면 AAA, deptno랑 20이랑 비교해서 맞으면 BBB ... 이런식으로 진행됨
+from emp;
+
+--case() 함수
+--범위를 조건으로 설정가능
+--  case 
+--       when 조건식 then 실행문
+--       when 조건식 then 실행문
+--       else 실행문
+--  end as 별칭
+select ename,job,deptno,
+    case
+    when deptno = 10 then 'AAA'
+    when deptno = 20 then 'BBB'
+    when deptno = 30 then 'CCC'
+    else '기타'
+end as 부서명
+from emp;
+
+select ename,job,sal,
+    case 
+    when sal between 3000 and 5000 then '임원'
+    when sal >= 2000 and sal < 3000 then '관리자'
+    when sal >= 500 and sal < 2000 then '사원'
+    else '기타'
+end as 직급
+from emp;
+
+--------------------------------------------------------------------------------
+--예제 1
+select 
+empno,rpad(substr(empno,1,2),4,'*') as MASKING_EMPNO,
+ename,rpad(substr(ename,1,1),length(ename),'*') as MASKING_ENAME
+from emp
+where length(ename) >=5 and length(ename) <6;
+
+--예제 2
+select empno,ename,sal,
+trunc((sal/21.5),2) as DAY_PAY,
+round((sal/21.5/8),1) as TIME_PAY
+from emp;
+
+--예제 4
+select empno,ename,mgr,
+case 
+    when mgr is null then '0000'
+    when substr(mgr,1,2) = '75' then '5555'
+    when substr(mgr,1,2) = '76' then '6666'
+    when substr(mgr,1,2) = '77' then '7777'
+    when substr(mgr,1,2) = '78' then '8888'
+    else to_char(mgr)
+end as CHG_MGR
+from emp;
+
+-------------------------------------------------------------------------------
+--7. 다중행 함수(그룹함수)
+--sum(),avg(),count(),max(),min()
+--결과를 하나의 값으로 반환함
+--일반 컬럼과 같이 사용 불가
+--크기 비교가 가능한 모든 타입에 사용 가능(날짜, 숫자 ...)
+
+--전체 직원의 월급을 더함
+select sum(sal)   -29025
+from emp;
+
+select avg(sal)
+from emp;
+
+--count(*) : 전체 레코드의 개수 확인
+select count(*),count(comm)
+from emp;
+
+select max(sal),min(sal)
+from emp;
+
+select ename,max(sal)   --다중행 함수와 일반 컬럼은 같이 사용할 수 없다.
+from emp;
+
+--날짜 비교도 가능
+select min(hiredate)    --가장 오래 일한 직원(입사일이 가장 빠른 사람)
+from emp
+where deptno = 20;
+
+select max(hiredate)    --가장 최근에 입사한 직원
+from emp
+where deptno = 20;
+
+--------------------------------------------------------------------------------
+--select 컬럼명
+--from 테이블명
+--where 조건식(그룹함수 사용 불가/group by,having 보다 먼저 실행)
+--group by 기준 컬럼명
+--having 조건식(그룹함수 사용)
+--order by 컬럼명 정렬방식 ===> 항상 맨 마지막에 작성
+
+--group by절
+select avg(sal) from emp where deptno = 10
+UNION
+select avg(sal) from emp where deptno = 20
+UNION
+select avg(sal) from emp where deptno = 30;
+
+select deptno
+from emp
+group by deptno;
+
+select deptno, avg(sal)   --행의 갯수가 같을 때는 같이 사용 가능
+from emp
+group by deptno
+order by deptno;
+
+select deptno,job,avg(sal)
+from emp
+group by deptno,job
+order by deptno,job desc;
 
 
+--having절
+--group by에 의해 조회된 값에 대한 조건을 건다.
+--조건식을 작성할 때 그룹함수를 사용한다.
+select deptno, avg(sal)
+from emp
+group by deptno
+having avg(sal) >= 2000;   
 
-
-
+select deptno, avg(sal)
+from emp
+where deptno != 10
+group by deptno
+having avg(sal) >= 2000;
 
 
 
