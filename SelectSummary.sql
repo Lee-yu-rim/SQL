@@ -579,15 +579,15 @@ where deptno = 20;
 --from 테이블명
 --where 조건식(그룹함수 사용 불가/group by,having 보다 먼저 실행)
 --group by 기준 컬럼명
---having 조건식(그룹함수 사용)
+--having 조건식(대부분 그룹함수 사용)
 --order by 컬럼명 정렬방식 ===> 항상 맨 마지막에 작성
 
 --group by절
-select avg(sal) from emp where deptno = 10
+select avg(sal) from emp where deptno = 10   --deptno가 10인 부서의 sal 평균
 UNION
-select avg(sal) from emp where deptno = 20
+select avg(sal) from emp where deptno = 20   --deptno가 20인 부서의 sal 평균
 UNION
-select avg(sal) from emp where deptno = 30;
+select avg(sal) from emp where deptno = 30;  --deptno가 30인 부서의 sal 평균
 
 select deptno
 from emp
@@ -611,12 +611,266 @@ select deptno, avg(sal)
 from emp
 group by deptno
 having avg(sal) >= 2000;   
+-- 부서(deptno)별 평균을 구하고 그 평균이 2000이상인 사원 조회
 
 select deptno, avg(sal)
 from emp
 where deptno != 10
 group by deptno
 having avg(sal) >= 2000;
+
+--------------------------------------------------------------------------------
+--조인(join)
+--2개 이상의 테이블에서 데이터를 조회
+--from 절에 두개 이상의 테이블을 작성한다.
+--where 절에 조인 조건을 작성한다.
+
+--cross join (where 절 없이 조인)
+--equals join (where 절에 등가연산자 사용 : =)
+--non equals join (where 절에 범위연산자 사용 : and,or)
+--self join (where 절에 하나의 테이블을 사용)
+--out join ( where 절에 누락된 데이터를 같이 조회하기 위해 사용 : (+))
+
+--equals join
+--emp 테이블의 사원의 근무부서(dname)를 조회하기 위해 dept 테이블을 조인함 -> 두 테이블의 공통걸럼인 deptno(부서번호)를 사용하여 조회
+select ename,job,e.deptno,dname,loc  --컬럼명이 중복되는 경우에는 앞에 테이블명을 써줘야함
+from emp e,dept d   --테이블에 별칭 부여 => 별칭을 주는 순간 테이블명을 썻던 곳에 별칭을 사용해줘야한다.
+where e.deptno = d.deptno and sal >= 3000;
+
+--non equals join
+--emp 테이블 사원의 급여등급(grade)를 조회하기 위해 salgrade 테이블을 조인 -> between and를 사용하여 sal의 값을 비교해서 조회
+select ename,sal,losal,hisal,grade
+from emp e,salgrade s
+--where e.sal >= s.losal and e.sal <= s.hisal
+where e.sal between s.losal and s.hisal
+order by grade;
+
+--사번, 이름, 급여, 부서번호, 부서명, 급여등급 
+--emp             dept           salgrade
+--3종류의 테이블 조회
+select empno,ename,sal,e.deptno,dname,grade
+from emp e, dept d, salgrade s
+where e.deptno = d.deptno and e.sal between s.losal and s.hisal; 
+
+--self join : 조회하려는 데이터가 한 테이블 안에 들어있는 경우에 사용
+select e.empno,e.ename,e.mgr,m.ename   --사원의 mgr(매니저)의 이름을 같이 조회하려고 함 -> mgr 이름이 emp 본인 테이블 안에 들어있음
+from emp e, emp m  -- emp e(사원)  emp m(매니저) 한 테이블이지만 나눠서 사용한다고 생각하면 됨 **테이블의 이름이 같으니 반드시 별칭 부여
+where e.mgr = m.empno;    -- emp 테이블안에 mgr 번호와 mgr 번호 중 empno 번호를 비교하여 동일한지 확인
+--mgr도 사원번호이기 때문에 mgr의 번호가 사원번호와 동일하다면 그 사람이 mgr번호의 이름이 되기 때문에 mgr 번호와 empno 사원번호를 비교확인
+
+--scott과 같은 부서에 있는 사원을 조회
+--ename   ename
+--scott   smith
+--scott   jones
+--scott   adams
+--scott   ford
+select work.ename , friend.ename   --scott의 이름과 scott과 같은 부서에 일하는 사원
+from emp work, emp friend
+where work.deptno = friend.deptno and work.ename = 'SCOTT' and friend.ename != 'SCOTT';
+--work에서의 부서번호와 friend의 부서번호가 같으면서 work에서 이름이 scott인 사원 = work.ename
+--work에서의 부서번호와 friend의 부서번호가 같으면서 freind에서 이름이 scott이 아닌 사원 = freind.ename
+--=> scott과 부서가 같은 사원들을 조회
+
+--out join(외부조인)
+--등가시 누락되는 데이터를 같이 조회하기 위해 사용
+select e.empno,e.ename,e.mgr,m.ename   
+from emp e, emp m  
+where e.mgr = m.empno(+);   --mgr이 null인 데이터는 누락됨(king) ->데이터가 누락된 테이블 쪽에 (+)를 붙인다.
+
+select ename,sal,d.deptno,dname
+from emp e, dept d
+where e.deptno(+) = d.deptno  --emp 테이블에는 부서가 10~30까지 있고 dept 테이블에는 10~40까지 있어서 40이 누락되므로 d.deptno에 (+)해줌
+order by deptno;
+------------------------------------------
+--ANSI-JOIN(표준 조인 방식)
+--cross join
+--natural join
+--inner join(equal, non equal)
+--outer join( (+) ) - [left , right , full] outer  join   // full은 양쪽 테이블에 누락되는 데이터를 모두 조회해줌
+
+--inner join(equal)
+select ename,sal,dname,loc
+from emp e inner join dept d
+on e.deptno = d.deptno;  --where 대신 on 사용
+
+select ename,sal,dname,loc
+from emp e join dept d
+using(deptno)   --두 테이블에서 비교하는 컬럼명이 동일할 때 사용
+where ename = 'SCOTT';   --추가적으로 조건 붙일 때 사용
+
+--ANSI-JOIN 으로 self join 하는 방식
+select e.empno,e.ename,e.mgr,m.ename
+from emp e inner join emp m
+on e.mgr = m.empno;   --mgr의 이름 조회
+
+--inner join(non equal)
+select empno,ename,sal,grade
+from emp e inner join salgrade s
+on e.sal between s.losal and s. hisal;
+
+--ANSI-JOIN 에서 out join(외부조인)을 사용하여 데이터의 누락없이 조회하는 방법
+select e.empno,e.ename,e.mgr,m.ename
+from emp e left outer join emp m  -- 데이터가 있는 쪽을 지정한다.
+on e.mgr = m.empno;
+
+--ANSI-JOIN을 이용하여 dept 테이블에 있는 40번 부서를 누락되지 않게 조회하는 방법
+select ename,sal,d.deptno,dname
+from emp e right outer join dept d
+on e.deptno = d.deptno;
+
+--3종류의 테이블을 ANSI-JOIN으로 표현하여 조회하는 방법
+select empno,ename,sal,d.deptno,dname,grade
+from emp e inner join dept d
+on e.deptno = d.deptno
+inner join salgrade s
+on e.sal between s.losal and s.hisal;
+
+--연습문제 1
+select d.deptno,dname,empno,ename,sal
+from emp e inner join dept d
+on e.deptno = d.deptno 
+where e.sal > 2000
+order by deptno;
+
+--연습문제 2
+select d.deptno, d.dname, trunc(avg(sal)) as AVG_SAL, max(sal) as MAX_SAL , min(sal) as MIN_SAL , count(*) as CNT
+from emp e inner join dept d
+--using(deptno)  -> 별칭 사용시 사용시 적용이 제한
+on e.deptno = d.deptno 
+group by d.deptno, d.dname;
+
+--연습문제 3
+select d.deptno,dname,empno,ename,job,sal
+from emp e right outer join dept d
+on e.deptno = d.deptno
+order by d.deptno, e.ename;
+
+--연습문제 4
+select d.deptno,d.dname,
+       e.empno,e.ename,e.mgr,e.sal,e.deptno as DEPTNO_1,
+       s.losal,s.hisal,s.grade,
+       m.empno as MGR_EMPNO, m.ename as MGR_ENAME
+from emp e right outer join dept d
+on e.deptno = d.deptno
+    full outer join salgrade s
+on e.sal between s.losal and s.hisal
+    left outer join emp m
+on e.mgr = m.empno
+order by d.deptno , e.empno;
+
+--------------------------------------------------------------------------------
+--서브쿼리
+--select 구문을 중첩해서 사용
+
+--단일행 서브쿼리: 실행결과가 한개
+select ename, max(sal)  --단일 함수와 다중행 함수를 같이 쓸 수 없음 
+from emp;
+-- =
+select ename,sal
+from emp
+where sal = 
+(select max(sal)   -- 서브쿼리를 이용해서 단일함수와 다중행 함수를 비교
+from emp);
+
+select deptno
+from emp
+where ename = 'SCOTT';
+-- +
+select dname
+from dept
+where deptno = 20;
+-- = 
+select dname   --메인쿼리
+from dept
+where deptno = 
+(select deptno  --서브쿼리
+from emp
+where ename = 'SCOTT');
+
+-- DALLAS 근무하는 사원의 이름, 부서번호 조회
+select ename, deptno
+from emp
+where deptno = 
+(select deptno
+from dept
+where loc = 'DALLAS');
+
+-- 자신의 직속상관이 king 인 사원과 급여를 조회하세요(서브쿼리문)
+select ename, sal
+from emp
+where mgr = 
+(select empno
+from emp
+where ename = 'KING');
+--ename 이 king 인 사원의 사원번호와 mgr(매니저)번호를 비교
+
+
+--다중행 서브쿼리 : 실행결과가 여러개
+--in : 결과 중에 하나만 만족하면 된다.
+--any : 부등호 사용 / 결과 중에 가장 작은 값 or 큰 값보다 크거나 작으면 된다.
+--all : 부등호 사용 / 결과 중에 가장 큰 값보다 크면 된다.
+select *
+from emp
+where sal in(5000,3000,2850);
+
+--in => 메인쿼리의 데이터가 서브쿼리의 결과 중 하나라도 일치하면 true
+select *
+from emp
+where sal in
+(select max(sal)
+from emp
+group by deptno);  --각 부서별로 가장 연봉이 높은 사원 조회
+
+--any => 메인쿼리의 조건식을 만족하는 서브쿼리의 결과가 하나 이상이면 true
+select *
+from emp
+where sal > any  -- 서브쿼리의 결과값 중 가장 작은 값보다 큰 값 (서브쿼리의 가장 작은 결과값인 2850보다 큰 값)
+(select max(sal)
+from emp                 
+group by deptno);      
+
+select *
+from emp
+where sal < any  -- 서브쿼리의 결과값 중 가장 큰 값보다 작은 값 (서브쿼리의 가장 작은 큰 결과값인 5000보다 작은 값)
+(select max(sal)
+from emp
+group by deptno);
+
+--all => 메인쿼리의 조건식을 서브쿼리의 결과가 모두 만족하면 true
+select ename,sal
+from emp
+where sal > all  --가장 큰 값보다 큰 값 (30번 부서의 연봉 중 가장 큰 값인 2850보다 큰 값 = 2850 이상의 값)
+(select sal
+from emp
+where deptno = 30);
+
+
+--다중열 서브쿼리
+--열을 여러개 받아와서 조건으로 사용
+select *
+from emp
+where (deptno,sal) in   --and를 대신해서 사용하는 것
+(select deptno,max(sal)
+from emp
+group by deptno);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
